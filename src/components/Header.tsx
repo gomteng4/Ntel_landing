@@ -25,6 +25,18 @@ export default function Header() {
       if (data) setSiteSettings(data)
     } catch (error) {
       console.error('Error fetching site settings:', error)
+      // 기본 설정 적용
+      setSiteSettings({
+        id: '1',
+        site_name: '승승통신',
+        logo_url: '',
+        primary_button_text: '가입신청',
+        primary_button_url: '#signup',
+        secondary_button_text: '고객센터',
+        secondary_button_url: '#contact',
+        created_at: '',
+        updated_at: ''
+      })
     }
   }
 
@@ -39,6 +51,10 @@ export default function Header() {
       if (data) setMenuItems(data)
     } catch (error) {
       console.error('Error fetching menu items:', error)
+      // 기본 메뉴 아이템 설정
+      setMenuItems([
+        { id: '1', title: '홈', url: '/', sort_order: 1, is_active: true, has_dropdown: false, menu_type: 'link', created_at: '', updated_at: '' }
+      ])
     }
   }
 
@@ -67,29 +83,39 @@ export default function Header() {
               <Link
                 key={item.id}
                 href={item.url || '#'}
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  item.menu_type === 'board' 
+                    ? 'text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md' 
+                    : 'text-gray-700 hover:text-blue-600'
+                }`}
+                title={item.menu_type === 'board' ? `${item.title} 게시판` : item.title}
               >
                 {item.title}
+                {item.menu_type === 'board' && (
+                  <span className="ml-1 text-xs text-blue-500">📋</span>
+                )}
               </Link>
             ))}
             
             {/* CTA 버튼들 */}
-            {siteSettings && (
-              <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4">
+              {siteSettings?.secondary_button_text && siteSettings?.secondary_button_url && (
                 <a
                   href={siteSettings.secondary_button_url}
                   className="text-blue-600 hover:text-blue-800 px-4 py-2 text-sm font-medium border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
                 >
                   {siteSettings.secondary_button_text}
                 </a>
+              )}
+              {siteSettings?.primary_button_text && siteSettings?.primary_button_url && (
                 <a
                   href={siteSettings.primary_button_url}
                   className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded-md transition-colors"
                 >
                   {siteSettings.primary_button_text}
                 </a>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* 모바일 메뉴 버튼 */}
@@ -117,14 +143,20 @@ export default function Header() {
                   href={item.url || '#'}
                   className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
                   onClick={() => setIsMenuOpen(false)}
+                  title={item.menu_type === 'board' ? `${item.title} 게시판` : item.title}
                 >
-                  {item.title}
+                  <span className="flex items-center">
+                    {item.title}
+                    {item.menu_type === 'board' && (
+                      <span className="ml-1 text-xs text-blue-500">📋</span>
+                    )}
+                  </span>
                 </Link>
               ))}
               
               {/* 모바일 CTA 버튼들 */}
-              {siteSettings && (
-                <div className="pt-4 space-y-2">
+              <div className="pt-4 space-y-2">
+                {siteSettings?.secondary_button_text && siteSettings?.secondary_button_url && (
                   <a
                     href={siteSettings.secondary_button_url}
                     className="block w-full text-center text-blue-600 hover:text-blue-800 px-4 py-2 text-sm font-medium border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
@@ -132,6 +164,8 @@ export default function Header() {
                   >
                     {siteSettings.secondary_button_text}
                   </a>
+                )}
+                {siteSettings?.primary_button_text && siteSettings?.primary_button_url && (
                   <a
                     href={siteSettings.primary_button_url}
                     className="block w-full text-center bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm font-medium rounded-md transition-colors"
@@ -139,8 +173,8 @@ export default function Header() {
                   >
                     {siteSettings.primary_button_text}
                   </a>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}

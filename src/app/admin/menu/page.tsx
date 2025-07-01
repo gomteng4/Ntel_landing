@@ -14,6 +14,15 @@ export default function MenuPage() {
   const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null)
   const router = useRouter()
 
+  // 미리 정의된 게시판 목록
+  const PRESET_BOARDS = [
+    { id: 'board_notice', name: '공지사항', description: '중요한 공지사항을 게시합니다' },
+    { id: 'board_faq', name: '자주묻는질문', description: 'FAQ와 도움말을 제공합니다' },
+    { id: 'board_qna', name: '질문답변', description: '질문과 답변을 주고받습니다' },
+    { id: 'board_news', name: '뉴스/소식', description: '최신 뉴스와 소식을 전합니다' },
+    { id: 'board_free', name: '자유게시판', description: '자유로운 의견을 나눕니다' }
+  ]
+
   useEffect(() => {
     const auth = localStorage.getItem('admin_auth')
     if (auth === 'true') {
@@ -39,149 +48,15 @@ export default function MenuPage() {
     }
   }
 
-  const createBoardTable = async (tableName: string) => {
-    try {
-      // SQL을 사용해 게시판 테이블 생성
-      const { error } = await supabase.rpc('create_board_table', {
-        table_name: tableName
-      })
-      
-      if (error) {
-        // RPC가 없으면 직접 SQL 실행
-        console.log('Creating board table:', tableName)
-        // 실제로는 Supabase의 SQL 에디터에서 수동으로 만들어야 할 수 있습니다
-        return true
-      }
-      
-      return true
-    } catch (error) {
-      console.error('Error creating board table:', error)
-      return false
-    }
-  }
-
-  const createBoardPage = async (tableName: string, title: string) => {
-    try {
-      // 게시판 페이지 템플릿 생성 (실제로는 파일 시스템 접근이 필요)
-      const boardPageContent = `'use client'
-
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
-
-interface BoardPost {
-  id: string
-  title: string
-  content: string
-  author: string
-  created_at: string
-  updated_at: string
-  is_active: boolean
-}
-
-export default function ${title.replace(/\s+/g, '')}Page() {
-  const [posts, setPosts] = useState<BoardPost[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
-  const fetchPosts = async () => {
-    try {
-      const { data } = await supabase
-        .from('${tableName}')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-      
-      if (data) setPosts(data)
-    } catch (error) {
-      console.error('Error fetching posts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">로딩 중...</h2>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">${title}</h1>
-          </div>
-          
-          <div className="divide-y divide-gray-200">
-            {posts.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                등록된 게시글이 없습니다.
-              </div>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="p-6 hover:bg-gray-50">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">{post.title}</h3>
-                  <p className="text-gray-600 mb-2">{post.content.substring(0, 100)}...</p>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>작성자: {post.author}</span>
-                    <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}`
-
-      console.log('Board page content created for:', tableName)
-      return true
-    } catch (error) {
-      console.error('Error creating board page:', error)
-      return false
-    }
-  }
-
   const handleSave = async (menu: MenuItem) => {
     try {
       let menuToSave = { ...menu }
 
-      // 게시판 타입인 경우 테이블과 페이지 생성
-      if (menu.menu_type === 'board' && menu.title) {
-        const tableName = `board_${menu.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}`
-        
-        // 테이블 이름 설정
-        menuToSave.board_table_name = tableName
-        menuToSave.url = `/${tableName}`
-
-        // 게시판 테이블 생성
-        const tableCreated = await createBoardTable(tableName)
-        if (!tableCreated) {
-          alert('게시판 테이블 생성에 실패했습니다. 수동으로 다음 SQL을 실행해주세요:\n\n' +
-            `CREATE TABLE ${tableName} (\n` +
-            '  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,\n' +
-            '  title TEXT NOT NULL,\n' +
-            '  content TEXT,\n' +
-            '  author TEXT DEFAULT \'관리자\',\n' +
-            '  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE(\'utc\'::text, NOW()) NOT NULL,\n' +
-            '  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE(\'utc\'::text, NOW()) NOT NULL,\n' +
-            '  is_active BOOLEAN DEFAULT true\n' +
-            ');')
-        }
-
-        // 게시판 페이지 생성
-        await createBoardPage(tableName, menu.title)
+      // 게시판 타입인 경우 URL 설정
+      if (menu.menu_type === 'board' && menu.board_table_name) {
+        // board/[slug] 동적 라우팅 사용
+        const boardSlug = menu.board_table_name.replace('board_', '')
+        menuToSave.url = `/board/${boardSlug}`
       }
 
       // 메뉴 항목 저장
@@ -203,12 +78,7 @@ export default function ${title.replace(/\s+/g, '')}Page() {
       await fetchMenuItems()
       setShowForm(false)
       setEditingMenu(null)
-      
-      if (menu.menu_type === 'board') {
-        alert(`메뉴가 저장되었습니다!\n\n게시판 테이블 "${menuToSave.board_table_name}"이 생성되었습니다.\n페이지는 수동으로 생성해주세요: src/app/${menuToSave.board_table_name}/page.tsx`)
-      } else {
-        alert('메뉴가 저장되었습니다!')
-      }
+      alert('메뉴가 성공적으로 저장되었습니다!')
     } catch (error) {
       console.error('Error saving menu:', error)
       alert('저장 중 오류가 발생했습니다.')
@@ -286,6 +156,7 @@ export default function ${title.replace(/\s+/g, '')}Page() {
         {showForm && editingMenu && (
           <MenuForm
             menu={editingMenu}
+            presetBoards={PRESET_BOARDS}
             onSave={handleSave}
             onCancel={() => {
               setShowForm(false)
@@ -346,10 +217,12 @@ export default function ${title.replace(/\s+/g, '')}Page() {
 
 function MenuForm({ 
   menu, 
+  presetBoards,
   onSave, 
   onCancel 
 }: { 
   menu: MenuItem
+  presetBoards: Array<{id: string, name: string, description: string}>
   onSave: (menu: MenuItem) => void
   onCancel: () => void 
 }) {
@@ -358,6 +231,18 @@ function MenuForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave(formData)
+  }
+
+  const handleBoardChange = (boardId: string) => {
+    const selectedBoard = presetBoards.find(board => board.id === boardId)
+    if (selectedBoard) {
+      setFormData({
+        ...formData,
+        board_table_name: boardId,
+        title: selectedBoard.name,
+        url: `/board/${boardId.replace('board_', '')}`
+      })
+    }
   }
 
   return (
@@ -388,7 +273,8 @@ function MenuForm({
               onChange={(e) => setFormData({
                 ...formData, 
                 menu_type: e.target.value as 'link' | 'board' | 'dropdown',
-                url: e.target.value === 'board' ? '' : formData.url
+                url: e.target.value === 'board' ? '' : formData.url,
+                board_table_name: e.target.value === 'board' ? '' : formData.board_table_name
               })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -414,16 +300,37 @@ function MenuForm({
         )}
 
         {formData.menu_type === 'board' && (
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="text-md font-medium text-blue-900 mb-2">게시판 자동 생성</h4>
-            <p className="text-sm text-blue-700 mb-3">
-              게시판 메뉴를 생성하면 자동으로 Supabase 테이블과 페이지가 생성됩니다.
-            </p>
-            <ul className="text-sm text-blue-600 space-y-1">
-              <li>• 테이블명: board_{formData.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</li>
-              <li>• URL: /{formData.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</li>
-              <li>• 기본 필드: id, title, content, author, created_at, updated_at, is_active</li>
-            </ul>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">게시판 선택</label>
+              <select
+                value={formData.board_table_name || ''}
+                onChange={(e) => handleBoardChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">게시판을 선택하세요</option>
+                {presetBoards.map((board) => (
+                  <option key={board.id} value={board.id}>
+                    {board.name} - {board.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {formData.board_table_name && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="text-md font-medium text-blue-900 mb-2">선택된 게시판 정보</h4>
+                <div className="text-sm text-blue-700 space-y-1">
+                  <p>• 테이블명: {formData.board_table_name}</p>
+                  <p>• URL: {formData.url}</p>
+                  <p>• 설명: {presetBoards.find(b => b.id === formData.board_table_name)?.description}</p>
+                </div>
+                <div className="mt-3 text-xs text-blue-600">
+                  <p>※ 이 게시판은 이미 Supabase에 생성되어 있으며 즉시 사용 가능합니다.</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
