@@ -6,9 +6,6 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { MenuItem } from '@/types'
 
-// 동적 렌더링 강제 설정
-export const dynamic = 'force-dynamic'
-
 export default function MenuPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])

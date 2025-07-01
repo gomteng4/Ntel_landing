@@ -7,8 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { ServiceCard } from '@/types'
 import ImageUpload from '@/components/ImageUpload'
 
-// 동적 렌더링 강제 설정
-export const dynamic = 'force-dynamic'
+
 
 export default function ServiceCardsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

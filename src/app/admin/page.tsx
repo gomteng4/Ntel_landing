@@ -4,9 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-// 동적 렌더링 강제 설정
-export const dynamic = 'force-dynamic'
-
 export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
