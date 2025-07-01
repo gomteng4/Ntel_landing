@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -10,70 +9,29 @@ interface BoardPost {
   title: string
   content: string
   author: string
+  view_count: number
+  is_pinned: boolean
   created_at: string
   updated_at: string
   is_active: boolean
 }
 
-interface BoardInfo {
-  title: string
-  tableName: string
-  description?: string
-}
-
-export default function DynamicBoardPage() {
-  const params = useParams()
+export default function FaqPage() {
   const [posts, setPosts] = useState<BoardPost[]>([])
-  const [boardInfo, setBoardInfo] = useState<BoardInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug
-
   useEffect(() => {
-    if (slug) {
-      initializeBoard()
-    }
-  }, [slug])
+    fetchPosts()
+  }, [])
 
-  const initializeBoard = async () => {
-    try {
-      // 1. 메뉴에서 게시판 정보 조회
-      const { data: menuData, error: menuError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('menu_type', 'board')
-        .eq('board_table_name', `board_${slug}`)
-        .single()
-
-      if (menuError || !menuData) {
-        setError('게시판을 찾을 수 없습니다.')
-        setLoading(false)
-        return
-      }
-
-      setBoardInfo({
-        title: menuData.title,
-        tableName: menuData.board_table_name || `board_${slug}`,
-        description: `${menuData.title} 게시판입니다.`
-      })
-
-      // 2. 게시판 게시글 조회
-      await fetchPosts(menuData.board_table_name || `board_${slug}`)
-
-    } catch (error) {
-      console.error('Error initializing board:', error)
-      setError('게시판 로딩 중 오류가 발생했습니다.')
-      setLoading(false)
-    }
-  }
-
-  const fetchPosts = async (tableName: string) => {
+  const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from(tableName)
+        .from('board_faq')
         .select('*')
         .eq('is_active', true)
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
       
       if (error) {
@@ -96,7 +54,7 @@ export default function DynamicBoardPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">로딩 중...</h2>
-          <p className="text-gray-600">게시판을 불러오고 있습니다.</p>
+          <p className="text-gray-600">자주묻는질문을 불러오고 있습니다.</p>
         </div>
       </div>
     )
@@ -131,8 +89,8 @@ export default function DynamicBoardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{boardInfo?.title}</h1>
-              <p className="text-gray-600 mt-1">{boardInfo?.description}</p>
+              <h1 className="text-3xl font-bold text-gray-900">❓ 자주묻는질문</h1>
+              <p className="text-gray-600 mt-1">FAQ와 도움말을 확인해보세요.</p>
             </div>
             <Link 
               href="/"
@@ -151,7 +109,7 @@ export default function DynamicBoardPage() {
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">
-                총 {posts.length}개의 게시글
+                총 {posts.length}개의 FAQ
               </span>
               <span className="text-sm text-gray-500">
                 마지막 업데이트: {posts.length > 0 ? new Date(posts[0].created_at).toLocaleDateString() : '없음'}
@@ -165,25 +123,28 @@ export default function DynamicBoardPage() {
               <div className="p-12 text-center">
                 <div className="text-gray-400 mb-4">
                   <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 게시글이 없습니다</h3>
-                <p className="text-gray-500">첫 번째 게시글을 작성해보세요.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 FAQ가 없습니다</h3>
+                <p className="text-gray-500">자주묻는질문이 등록되면 알려드리겠습니다.</p>
               </div>
             ) : (
               posts.map((post, index) => (
-                <div key={post.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div key={post.id} className={`p-6 hover:bg-gray-50 transition-colors ${post.is_pinned ? 'bg-yellow-50' : ''}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-sm font-medium text-blue-600">#{posts.length - index}</span>
+                        {post.is_pinned && (
+                          <span className="bg-yellow-500 text-white px-2 py-1 text-xs font-medium rounded">⭐ 중요</span>
+                        )}
+                        <span className="text-sm font-medium text-blue-600">Q{posts.length - index}</span>
                         <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
                           {post.title}
                         </h3>
                       </div>
-                      <p className="text-gray-600 mb-3 line-clamp-2">
-                        {post.content ? post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') : '내용이 없습니다.'}
+                      <p className="text-gray-600 mb-3 line-clamp-3">
+                        {post.content ? post.content.substring(0, 200) + (post.content.length > 200 ? '...' : '') : '내용이 없습니다.'}
                       </p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <span className="flex items-center">
@@ -196,17 +157,15 @@ export default function DynamicBoardPage() {
                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {new Date(post.created_at).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {new Date(post.created_at).toLocaleDateString('ko-KR')}
                         </span>
-                        {post.updated_at !== post.created_at && (
-                          <span className="text-orange-500 text-xs">수정됨</span>
-                        )}
+                        <span className="flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          {post.view_count || 0}
+                        </span>
                       </div>
                     </div>
                   </div>
