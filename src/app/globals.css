@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-red: #ef4444;
+  --primary-blue: #3742fa;
+  --gradient-start: #ff6b6b;
+  --gradient-end: #ff5252;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 커스텀 컴포넌트 */
+.hero-gradient {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+}
+
+.btn-primary {
+  @apply bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200;
+}
+
+.btn-secondary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200;
+}
+
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.service-card {
+  @apply bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer;
+}
+
+.pricing-card {
+  @apply bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100;
+}
+
+.review-card {
+  @apply bg-white rounded-lg p-6 shadow-md border border-gray-100;
+} 
