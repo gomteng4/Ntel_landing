@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase'
 import { SiteSettings } from '@/types'
 import ImageUpload from '@/components/ImageUpload'
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic'
+
 export default function SiteSettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null)

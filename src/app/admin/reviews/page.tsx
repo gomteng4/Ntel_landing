@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { CustomerReview } from '@/types'
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic'
+
 export default function ReviewsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [reviews, setReviews] = useState<CustomerReview[]>([])

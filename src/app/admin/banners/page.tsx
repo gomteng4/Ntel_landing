@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase'
 import { Banner } from '@/types'
 import ImageUpload from '@/components/ImageUpload'
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic'
+
 export default function BannersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
